@@ -1,0 +1,115 @@
+# Install required packages
+!pip install PyMuPDF spacy
+
+# Download spaCy language model
+!python -m spacy download en_core_web_sm
+
+# Import necessary libraries
+import fitz  # For PDF text extraction
+import spacy  # NLP library for text processing
+import re  # Regular expressions for text cleaning
+from google.colab import files  # For uploading files
+# Load the spaCy NLP model
+# Load the spaCy NLP model
+nlp = spacy.load("en_core_web_sm")
+
+def extract_text_from_pdf(filepath="/content/SJS Transcript Call.pdf"):
+    """Extract raw text from the PDF using PyMuPDF."""
+    doc = fitz.open(filepath)
+    text = ""
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        text += page.get_text("text")
+    return text
+
+def preprocess_text(text):
+    """Clean and preprocess extracted text."""
+    text = re.sub(r'\n+', ' ', text)  # Remove excessive newlines
+    text = re.sub(r'\s+', ' ', text).strip()  # Normalize spaces
+    return text
+
+def extract_key_sections(text):
+    """Identify and extract key sections relevant to investors."""
+    doc = nlp(text)
+    sections = {
+        "Future Growth Prospects": [],
+        "Key Business Changes": [],
+        "Triggers for Earnings": [],
+        "Material Information Affecting Growth": []
+    }
+
+    for sent in doc.sents:
+        sentence = sent.text.lower()
+        if any(keyword in sentence for keyword in ["growth", "future", "prospects", "forecast"]):
+            sections["Future Growth Prospects"].append(sent.text)
+        elif any(keyword in sentence for keyword in ["acquisition", "merger", "restructuring", "change"]):
+            sections["Key Business Changes"].append(sent.text)
+        elif any(keyword in sentence for keyword in ["trigger", "driver", "opportunity"]):
+            sections["Triggers for Earnings"].append(sent.text)
+        elif any(keyword in sentence for keyword in ["impact", "risk", "effect", "material"]):
+            sections["Material Information Affecting Growth"].append(sent.text)
+
+    return sections
+    text = ""
+    for page_num in range(len(doc)):
+        page = doc.load_page(page_num)
+        text += page.get_text("text")
+    return text
+
+def preprocess_text(text):
+    """Clean and preprocess extracted text."""
+    text = re.sub(r'\n+', ' ', text)  # Remove excessive newlines
+    text = re.sub(r'\s+', ' ', text).strip()  # Normalize spaces
+    return text
+
+def extract_key_sections(text):
+    """Identify and extract key sections relevant to investors."""
+    doc = nlp(text)
+    sections = {
+        "Future Growth Prospects": [],
+        "Key Business Changes": [],
+        "Triggers for Earnings": [],
+        "Material Information Affecting Growth": []
+    }
+
+    for sent in doc.sents:
+        sentence = sent.text.lower()
+        if any(keyword in sentence for keyword in ["growth", "future", "prospects", "forecast"]):
+            sections["Future Growth Prospects"].append(sent.text)
+        elif any(keyword in sentence for keyword in ["acquisition", "merger", "restructuring", "change"]):
+            sections["Key Business Changes"].append(sent.text)
+        elif any(keyword in sentence for keyword in ["trigger", "driver", "opportunity"]):
+            sections["Triggers for Earnings"].append(sent.text)
+        elif any(keyword in sentence for keyword in ["impact", "risk", "effect", "material"]):
+            sections["Material Information Affecting Growth"].append(sent.text)
+
+    return sections
+def analyze_pdf_without_gpt(pdf_path):
+    """Main function to extract insights from the PDF without using GPT."""
+    text = extract_text_from_pdf(pdf_path)
+    cleaned_text = preprocess_text(text)
+    key_sections = extract_key_sections(cleaned_text)
+
+    # Directly display relevant sentences from each section
+    summarized_insights = {}
+    for section, content in key_sections.items():
+        if content:
+            summarized_insights[section] = "\n".join(content[:5])  # Display up to 5 sentences
+        else:
+            summarized_insights[section] = "No relevant information found."
+
+    return summarized_insights
+# Upload the PDF file from your computer
+uploaded = files.upload()
+# Check if any files were uploaded
+if uploaded:  # Proceed only if files were uploaded
+    pdf_file = list(uploaded.keys())[0]
+
+    # Run the analysis without GPT
+    insights = analyze_pdf_without_gpt("/content/SJS Transcript Call.pdf")
+
+    # Display the extracted insights (once)
+    for section, summary in insights.items():
+        print(f"\n### {section} ###\n{summary}\n")
+else:
+    print("No file uploaded. Please upload a PDF file to proceed.")
